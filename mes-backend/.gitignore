@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+.venv/
+staticfiles/
+*.log
+db.sqlite3
+ celerybeat-schedule
+.vscode/
+.idea/
+*.swp
+*.swo
