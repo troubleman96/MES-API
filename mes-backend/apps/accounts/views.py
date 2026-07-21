@@ -35,13 +35,15 @@ class LoginView(APIView):
         )
 
 
+from apps.core.responses import envelope_error
+
 class RefreshTokenView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         refresh_token = request.data.get("refresh_token")
         if not refresh_token:
-            return Response({"detail": "refresh_token is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return envelope_error("missing_token", "refresh_token is required.", status=status.HTTP_400_BAD_REQUEST)
         return services.refresh_token(refresh_token)
 
 

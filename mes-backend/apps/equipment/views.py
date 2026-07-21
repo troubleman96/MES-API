@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 
 from apps.core.pagination import MesPagination
 from apps.core.permissions import IsMerchant, IsOwnerMerchant
+from apps.core.responses import envelope_error, envelope_ok
 from apps.equipment import services
 from apps.equipment.models import Product
 from apps.equipment.serializers import (
@@ -40,8 +41,8 @@ class ProductDetailView(APIView):
     def get(self, request, pk):
         product = services.get_product(pk)
         if product is None:
-            return Response({"detail": "Not found."}, status=404)
-        return Response(ProductDetailSerializer(product).data)
+            return envelope_error("not_found", "Product not found.", status=404)
+        return envelope_ok(data=ProductDetailSerializer(product).data)
 
     def put(self, request, pk):
         return services.update_listing(request.user, pk, request.data)
@@ -74,8 +75,8 @@ class MerchantDetailView(APIView):
     def get(self, request, pk):
         merchant = services.get_merchant(pk)
         if merchant is None:
-            return Response({"detail": "Not found."}, status=404)
-        return Response(MerchantDetailSerializer(merchant).data)
+            return envelope_error("not_found", "Merchant not found.", status=404)
+        return envelope_ok(data=MerchantDetailSerializer(merchant).data)
 
 
 class MerchantProductListView(APIView):
