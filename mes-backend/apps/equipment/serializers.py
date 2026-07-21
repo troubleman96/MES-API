@@ -12,12 +12,14 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 class ProductListSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
+    merchant_name = serializers.CharField(source="merchant.business_name", read_only=True)
 
     class Meta:
         model = Product
         fields = [
             "id", "name", "category", "daily_rate_tzs",
             "is_featured", "is_active", "created_at", "images",
+            "merchant_name",
         ]
 
 
