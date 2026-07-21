@@ -3,14 +3,14 @@ from django.conf import settings
 
 
 class SendAfricaClient:
-    BASE_URL = "https://api.sendafrica.com/v1"
+    BASE_URL = "https://api.sendafrica.online"
 
     def __init__(self):
         self.api_key = settings.SENDAFRICA_API_KEY
 
     def send_sms(self, phone_number: str, message: str) -> bool:
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "X-API-Key": self.api_key,
             "Content-Type": "application/json",
         }
         payload = {
@@ -19,7 +19,7 @@ class SendAfricaClient:
         }
         try:
             response = requests.post(
-                f"{self.BASE_URL}/sms/send",
+                f"{self.BASE_URL}/v1/sms/",
                 json=payload,
                 headers=headers,
                 timeout=30,

@@ -1,3 +1,4 @@
+import uuid
 from datetime import timedelta
 
 from django.db import transaction
@@ -32,6 +33,9 @@ def create_payment(user, sub_order_id):
         result = client.initiate_payment(
             amount_tzs=sub_order.subtotal_tzs,
             phone=user.phone or "",
+            first_name=user.first_name or "",
+            last_name=user.last_name or "",
+            email=user.email or "",
             description=f"MES Order {str(sub_order.id)[:8]}",
         )
     except Exception as e:
@@ -41,8 +45,8 @@ def create_payment(user, sub_order_id):
         sub_order=sub_order,
         snippe_reference=result.get("reference", str(uuid.uuid4())),
         amount_tzs=sub_order.subtotal_tzs,
-        network=result.get("network", ""),
-        expires_at=timezone.now() + timedelta(minutes=30),
+        network=result.get("channel", {}).get("provider", "") if isinstance(result.get("channel"), dict) else "",
+        expires_at=timezone.now() + timedelta(hours=4),
     )
 
     return envelope_ok(data=PaymentIntentSerializer(payment).data, status=status.HTTP_201_CREATED)
@@ -71,8 +75,9 @@ def handle_webhook(event_id: str, payload: dict):
     with transaction.atomic():
         WebhookEvent.objects.create(provider="snippe", event_id=event_id)
 
-        payment_status = payload.get("status")
-        reference = payload.get("reference")
+        event_type = payload.get("type", "")
+        data = payload.get("data", {})
+        reference = data.get("reference", "")
 
         if not reference:
             return envelope_error("invalid_payload", "Missing reference.", status=status.HTTP_400_BAD_REQUEST)
@@ -82,9 +87,10 @@ def handle_webhook(event_id: str, payload: dict):
         except PaymentIntent.DoesNotExist:
             return envelope_error("not_found", "Payment intent not found.", status=status.HTTP_404_NOT_FOUND)
 
-        if payment_status == "completed":
+        if event_type == "payment.completed":
             payment.status = "completed"
-            payment.network = payload.get("network", payment.network)
+            channel = data.get("channel", {})
+            payment.network = channel.get("provider", payment.network) if isinstance(channel, dict) else payment.network
             payment.save(update_fields=["status", "network"])
 
             payment.sub_order.status = "confirmed"
@@ -93,15 +99,15 @@ def handle_webhook(event_id: str, payload: dict):
             from apps.contracts.services import generate_contract_pdf
             generate_contract_pdf(payment.sub_order)
 
-        elif payment_status == "failed":
+        elif event_type == "payment.failed":
             payment.status = "failed"
-            payment.failure_reason = payload.get("failure_reason", "")
+            payment.failure_reason = data.get("failure_reason", "")
             payment.save(update_fields=["status", "failure_reason"])
 
             payment.sub_order.status = "payment_failed"
             payment.sub_order.save(update_fields=["status"])
 
-        elif payment_status == "expired":
+        elif event_type == "payment.expired":
             payment.status = "expired"
             payment.save(update_fields=["status"])
 

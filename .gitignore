@@ -1,0 +1,11 @@
+.env
+*.pyc
+__pycache__/
+db.sqlite3
+celerybeat-schedule
+.vscode/
+.idea/
+*.egg-info/
+dist/
+build/
+node_modules/
