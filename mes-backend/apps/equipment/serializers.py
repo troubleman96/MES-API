@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.accounts.models import Account
 from apps.equipment.models import AvailabilityBlock, Product, ProductImage
 
 
@@ -41,6 +42,36 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
             "name", "category", "description", "specs",
             "daily_rate_tzs", "is_featured", "is_active",
         ]
+
+
+class MerchantListSerializer(serializers.ModelSerializer):
+    product_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Account
+        fields = [
+            "id", "email", "phone", "phone_verified", "role",
+            "first_name", "last_name", "business_name",
+            "is_verified_merchant", "created_at", "product_count",
+        ]
+
+    def get_product_count(self, obj):
+        return getattr(obj, "_product_count", 0)
+
+
+class MerchantDetailSerializer(serializers.ModelSerializer):
+    product_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Account
+        fields = [
+            "id", "email", "phone", "phone_verified", "role",
+            "first_name", "last_name", "facility_name", "business_name",
+            "is_verified_merchant", "created_at", "product_count",
+        ]
+
+    def get_product_count(self, obj):
+        return getattr(obj, "_product_count", 0)
 
 
 class AvailabilityBlockSerializer(serializers.ModelSerializer):

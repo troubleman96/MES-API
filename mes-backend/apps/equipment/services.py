@@ -49,9 +49,31 @@ def check_availability(product_id):
     })
 
 
+def list_merchants(query_params):
+    from django.db.models import Count
+    qs = Account.objects.filter(
+        role="merchant",
+        is_verified_merchant=True,
+        is_active=True,
+    ).annotate(_product_count=Count("products"))
+
+    search = query_params.get("search")
+    if search:
+        qs = qs.filter(
+            Q(business_name__icontains=search)
+            | Q(first_name__icontains=search)
+            | Q(last_name__icontains=search)
+        )
+
+    return qs.order_by("-_product_count")
+
+
 def get_merchant(merchant_id):
+    from django.db.models import Count
     try:
-        merchant = Account.objects.get(id=merchant_id, role="merchant")
+        merchant = Account.objects.filter(role="merchant").annotate(
+            _product_count=Count("products")
+        ).get(id=merchant_id)
     except Account.DoesNotExist:
         return None
     return merchant

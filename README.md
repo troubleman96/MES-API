@@ -1231,4 +1231,4 @@ docker compose exec api python manage.py seed_data
 
 ## License
 
-Internal project — University of Dar es Salaam, Computer Science Department.
+Built by **DIT — Dar es Salaam Institute of Technology**

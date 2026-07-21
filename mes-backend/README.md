@@ -188,4 +188,4 @@ The E2E test covers: registration, login, OTP, product creation, cart, checkout,
 
 ## License
 
-Internal project — University of Dar es Salaam, Computer Science Department.
+Built by **DIT — Dar es Salaam Institute of Technology**

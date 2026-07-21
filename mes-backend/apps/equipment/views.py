@@ -7,6 +7,8 @@ from apps.core.permissions import IsMerchant, IsOwnerMerchant
 from apps.equipment import services
 from apps.equipment.models import Product
 from apps.equipment.serializers import (
+    MerchantDetailSerializer,
+    MerchantListSerializer,
     ProductCreateUpdateSerializer,
     ProductDetailSerializer,
     ProductListSerializer,
@@ -55,6 +57,17 @@ class ProductAvailabilityView(APIView):
         return services.check_availability(pk)
 
 
+class MerchantListView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        merchants = services.list_merchants(request.query_params)
+        paginator = MesPagination()
+        page = paginator.paginate_queryset(merchants, request)
+        serializer = MerchantListSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
 class MerchantDetailView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -62,11 +75,7 @@ class MerchantDetailView(APIView):
         merchant = services.get_merchant(pk)
         if merchant is None:
             return Response({"detail": "Not found."}, status=404)
-        return Response({
-            "id": str(merchant.id),
-            "business_name": merchant.business_name,
-            "is_verified_merchant": merchant.is_verified_merchant,
-        })
+        return Response(MerchantDetailSerializer(merchant).data)
 
 
 class MerchantProductListView(APIView):
