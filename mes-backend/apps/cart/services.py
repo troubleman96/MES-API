@@ -23,11 +23,19 @@ def replace_cart(user, lines_data):
         CartLine.objects.filter(cart=cart).delete()
 
         for line_data in lines_data:
-            try:
-                product = Product.objects.get(id=line_data["product"], is_active=True)
-            except Product.DoesNotExist:
+            product = line_data["product"]
+            if isinstance(product, str):
+                try:
+                    product = Product.objects.get(id=product, is_active=True)
+                except Product.DoesNotExist:
+                    stale_lines.append({
+                        "product": line_data["product"],
+                        "reason": "product_not_found",
+                    })
+                    continue
+            elif not product.is_active:
                 stale_lines.append({
-                    "product": line_data["product"],
+                    "product": str(product.id),
                     "reason": "product_not_found",
                 })
                 continue
@@ -91,8 +99,8 @@ def validate_cart_for_checkout(user):
 
         if AvailabilityBlock.objects.filter(
             product=line.product,
-            start_date__lte=line.line.rental_end,
-            end_date__gte=line.line.rental_start,
+            start_date__lte=line.rental_end,
+            end_date__gte=line.rental_start,
         ).exists():
             return envelope_error("cart_changed", f"Product {line.product.name} is no longer available for selected dates.", status=status.HTTP_409_CONFLICT)
 

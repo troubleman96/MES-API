@@ -31,6 +31,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "description", "specs", "daily_rate_tzs", "is_featured",
             "is_active", "created_at", "images",
         ]
+        read_only_fields = ["merchant"]
 
 
 class ProductCreateUpdateSerializer(serializers.ModelSerializer):

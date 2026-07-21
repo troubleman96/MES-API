@@ -23,15 +23,29 @@ class ProductListView(APIView):
         serializer = ProductListSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
 
+    def post(self, request):
+        return services.create_listing(request.user, request.data)
+
 
 class ProductDetailView(APIView):
     permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        if self.request.method in ("PUT", "DELETE"):
+            return [permissions.IsAuthenticated(), IsMerchant()]
+        return [permissions.AllowAny()]
 
     def get(self, request, pk):
         product = services.get_product(pk)
         if product is None:
             return Response({"detail": "Not found."}, status=404)
         return Response(ProductDetailSerializer(product).data)
+
+    def put(self, request, pk):
+        return services.update_listing(request.user, pk, request.data)
+
+    def delete(self, request, pk):
+        return services.delete_listing(request.user, pk)
 
 
 class ProductAvailabilityView(APIView):
